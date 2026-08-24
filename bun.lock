@@ -5,13 +5,13 @@
     "": {
       "name": "bookmark-manager-api",
       "dependencies": {
-        "@prisma/client": "latest",
+        "@prisma/client": "^7.9.1",
         "graphql": "latest",
         "graphql-yoga": "latest",
       },
       "devDependencies": {
         "@types/bun": "latest",
-        "prisma": "latest",
+        "prisma": "^7.9.1",
         "typescript": "latest",
       },
     },
