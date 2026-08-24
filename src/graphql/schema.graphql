@@ -29,3 +29,27 @@ type BookmarkConnection {
   items: [Bookmark!]!
   nextCursor: ID
 }
+type Mutation {
+  createFolder(name: String!): Folder!
+
+  createBookmark(
+  title: String!
+  url: String!
+  folderId: ID!
+  tags: [String!]
+): Bookmark!
+
+updateBookmark(
+  id: ID!
+  title: String
+  url: String
+  tags: [String!]
+): Bookmark!
+
+  deleteBookmark(id: ID!): Boolean!
+
+  moveBookmark(
+    id: ID!
+    folderId: ID!
+  ): Bookmark!
+}
