@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { prisma } from "../db";
 
 interface FolderArgs {
@@ -14,6 +15,20 @@ interface BookmarksArgs {
   take?: number;
   cursor?: string;
 }
+
+const validationError = (message: string) =>
+  new GraphQLError(message, {
+    extensions: {
+      code: "VALIDATION_ERROR",
+    },
+  });
+
+const notFoundError = (message: string) =>
+  new GraphQLError(message, {
+    extensions: {
+      code: "NOT_FOUND",
+    },
+  });
 
 export const resolvers = {
   Query: {
@@ -117,12 +132,13 @@ export const resolvers = {
       });
     },
   },
+
   Mutation: {
     createFolder: async (_parent: unknown, args: { name: string }) => {
       const name = args.name.trim();
 
       if (!name) {
-        throw new Error("Folder name cannot be empty");
+        throw validationError("Folder name cannot be empty");
       }
 
       return prisma.folder.create({
@@ -143,16 +159,19 @@ export const resolvers = {
     ) => {
       const title = args.title.trim();
 
+      // Validate title
       if (!title) {
-        throw new Error("Bookmark title cannot be empty");
+        throw validationError("Bookmark title cannot be empty");
       }
 
+      // Validate URL
       try {
         new URL(args.url);
       } catch {
-        throw new Error("Bookmark URL must be a valid URL");
+        throw validationError("Bookmark URL must be a valid URL");
       }
 
+      // Validate folder
       const folder = await prisma.folder.findUnique({
         where: {
           id: args.folderId,
@@ -160,7 +179,7 @@ export const resolvers = {
       });
 
       if (!folder) {
-        throw new Error("Folder not found");
+        throw notFoundError("Folder not found");
       }
 
       return prisma.bookmark.create({
@@ -182,6 +201,7 @@ export const resolvers = {
         tags?: string[] | null;
       },
     ) => {
+      // Check bookmark exists
       const existingBookmark = await prisma.bookmark.findUnique({
         where: {
           id: args.id,
@@ -189,7 +209,7 @@ export const resolvers = {
       });
 
       if (!existingBookmark) {
-        throw new Error("Bookmark not found");
+        throw notFoundError("Bookmark not found");
       }
 
       const data: {
@@ -198,21 +218,23 @@ export const resolvers = {
         tags?: string[];
       } = {};
 
+      // Validate updated title
       if (args.title !== undefined && args.title !== null) {
         const title = args.title.trim();
 
         if (!title) {
-          throw new Error("Bookmark title cannot be empty");
+          throw validationError("Bookmark title cannot be empty");
         }
 
         data.title = title;
       }
 
+      // Validate updated URL
       if (args.url !== undefined && args.url !== null) {
         try {
           new URL(args.url);
         } catch {
-          throw new Error("Bookmark URL must be a valid URL");
+          throw validationError("Bookmark URL must be a valid URL");
         }
 
         data.url = args.url;
@@ -231,6 +253,7 @@ export const resolvers = {
     },
 
     deleteBookmark: async (_parent: unknown, args: { id: string }) => {
+      // Check bookmark exists
       const existingBookmark = await prisma.bookmark.findUnique({
         where: {
           id: args.id,
@@ -238,7 +261,7 @@ export const resolvers = {
       });
 
       if (!existingBookmark) {
-        throw new Error("Bookmark not found");
+        throw notFoundError("Bookmark not found");
       }
 
       await prisma.bookmark.delete({
@@ -257,6 +280,7 @@ export const resolvers = {
         folderId: string;
       },
     ) => {
+      // Check bookmark exists
       const bookmark = await prisma.bookmark.findUnique({
         where: {
           id: args.id,
@@ -264,9 +288,10 @@ export const resolvers = {
       });
 
       if (!bookmark) {
-        throw new Error("Bookmark not found");
+        throw notFoundError("Bookmark not found");
       }
 
+      // Check destination folder exists
       const folder = await prisma.folder.findUnique({
         where: {
           id: args.folderId,
@@ -274,7 +299,7 @@ export const resolvers = {
       });
 
       if (!folder) {
-        throw new Error("Folder not found");
+        throw notFoundError("Folder not found");
       }
 
       return prisma.bookmark.update({
