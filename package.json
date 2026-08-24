@@ -1,0 +1,23 @@
+{
+  "name": "bookmark-manager-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "gendb": "bunx prisma migrate dev",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "latest",
+    "graphql": "latest",
+    "graphql-yoga": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prisma": "latest",
+    "typescript": "latest"
+  }
+}
