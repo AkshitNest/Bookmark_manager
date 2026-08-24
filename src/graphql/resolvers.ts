@@ -46,10 +46,20 @@ export const resolvers = {
 
           ...(args.search
             ? {
-                title: {
-                  contains: args.search,
-                  mode: "insensitive",
-                },
+                OR: [
+                  {
+                    title: {
+                      contains: args.search,
+                      mode: "insensitive",
+                    },
+                  },
+                  {
+                    url: {
+                      contains: args.search,
+                      mode: "insensitive",
+                    },
+                  },
+                ],
               }
             : {}),
         },
@@ -77,12 +87,10 @@ export const resolvers = {
 
       const hasNextPage = bookmarks.length > take;
 
-      const items = hasNextPage
-        ? bookmarks.slice(0, take)
-        : bookmarks;
+      const items = hasNextPage ? bookmarks.slice(0, take) : bookmarks;
 
       const nextCursor = hasNextPage
-        ? items[items.length - 1]?.id ?? null
+        ? (items[items.length - 1]?.id ?? null)
         : null;
 
       return {
@@ -110,179 +118,173 @@ export const resolvers = {
     },
   },
   Mutation: {
-  createFolder: async (
-    _parent: unknown,
-    args: { name: string },
-  ) => {
-    const name = args.name.trim();
+    createFolder: async (_parent: unknown, args: { name: string }) => {
+      const name = args.name.trim();
 
-    if (!name) {
-      throw new Error("Folder name cannot be empty");
-    }
+      if (!name) {
+        throw new Error("Folder name cannot be empty");
+      }
 
-    return prisma.folder.create({
-      data: {
-        name,
-      },
-    });
-  },
-
-  createBookmark: async (
-    _parent: unknown,
-    args: {
-      title: string;
-      url: string;
-      folderId: string;
-      tags?: string[];
+      return prisma.folder.create({
+        data: {
+          name,
+        },
+      });
     },
-  ) => {
-    const title = args.title.trim();
 
-    if (!title) {
-      throw new Error("Bookmark title cannot be empty");
-    }
-
-    try {
-      new URL(args.url);
-    } catch {
-      throw new Error("Bookmark URL must be a valid URL");
-    }
-
-    const folder = await prisma.folder.findUnique({
-      where: {
-        id: args.folderId,
+    createBookmark: async (
+      _parent: unknown,
+      args: {
+        title: string;
+        url: string;
+        folderId: string;
+        tags?: string[];
       },
-    });
-
-    if (!folder) {
-      throw new Error("Folder not found");
-    }
-
-    return prisma.bookmark.create({
-      data: {
-        title,
-        url: args.url,
-        tags: args.tags ?? [],
-        folderId: args.folderId,
-      },
-    });
-  },
-
-  updateBookmark: async (
-    _parent: unknown,
-    args: {
-      id: string;
-      title?: string | null;
-      url?: string | null;
-      tags?: string[] | null;
-    },
-  ) => {
-    const existingBookmark = await prisma.bookmark.findUnique({
-      where: {
-        id: args.id,
-      },
-    });
-
-    if (!existingBookmark) {
-      throw new Error("Bookmark not found");
-    }
-
-    const data: {
-      title?: string;
-      url?: string;
-      tags?: string[];
-    } = {};
-
-    if (args.title !== undefined && args.title !== null) {
+    ) => {
       const title = args.title.trim();
 
       if (!title) {
         throw new Error("Bookmark title cannot be empty");
       }
 
-      data.title = title;
-    }
-
-    if (args.url !== undefined && args.url !== null) {
       try {
         new URL(args.url);
       } catch {
         throw new Error("Bookmark URL must be a valid URL");
       }
 
-      data.url = args.url;
-    }
+      const folder = await prisma.folder.findUnique({
+        where: {
+          id: args.folderId,
+        },
+      });
 
-    if (args.tags !== undefined && args.tags !== null) {
-      data.tags = args.tags;
-    }
+      if (!folder) {
+        throw new Error("Folder not found");
+      }
 
-    return prisma.bookmark.update({
-      where: {
-        id: args.id,
-      },
-      data,
-    });
-  },
-
-  deleteBookmark: async (
-    _parent: unknown,
-    args: { id: string },
-  ) => {
-    const existingBookmark = await prisma.bookmark.findUnique({
-      where: {
-        id: args.id,
-      },
-    });
-
-    if (!existingBookmark) {
-      throw new Error("Bookmark not found");
-    }
-
-    await prisma.bookmark.delete({
-      where: {
-        id: args.id,
-      },
-    });
-
-    return true;
-  },
-
-  moveBookmark: async (
-    _parent: unknown,
-    args: {
-      id: string;
-      folderId: string;
+      return prisma.bookmark.create({
+        data: {
+          title,
+          url: args.url,
+          tags: args.tags ?? [],
+          folderId: args.folderId,
+        },
+      });
     },
-  ) => {
-    const bookmark = await prisma.bookmark.findUnique({
-      where: {
-        id: args.id,
-      },
-    });
 
-    if (!bookmark) {
-      throw new Error("Bookmark not found");
-    }
-
-    const folder = await prisma.folder.findUnique({
-      where: {
-        id: args.folderId,
+    updateBookmark: async (
+      _parent: unknown,
+      args: {
+        id: string;
+        title?: string | null;
+        url?: string | null;
+        tags?: string[] | null;
       },
-    });
+    ) => {
+      const existingBookmark = await prisma.bookmark.findUnique({
+        where: {
+          id: args.id,
+        },
+      });
 
-    if (!folder) {
-      throw new Error("Folder not found");
-    }
+      if (!existingBookmark) {
+        throw new Error("Bookmark not found");
+      }
 
-    return prisma.bookmark.update({
-      where: {
-        id: args.id,
+      const data: {
+        title?: string;
+        url?: string;
+        tags?: string[];
+      } = {};
+
+      if (args.title !== undefined && args.title !== null) {
+        const title = args.title.trim();
+
+        if (!title) {
+          throw new Error("Bookmark title cannot be empty");
+        }
+
+        data.title = title;
+      }
+
+      if (args.url !== undefined && args.url !== null) {
+        try {
+          new URL(args.url);
+        } catch {
+          throw new Error("Bookmark URL must be a valid URL");
+        }
+
+        data.url = args.url;
+      }
+
+      if (args.tags !== undefined && args.tags !== null) {
+        data.tags = args.tags;
+      }
+
+      return prisma.bookmark.update({
+        where: {
+          id: args.id,
+        },
+        data,
+      });
+    },
+
+    deleteBookmark: async (_parent: unknown, args: { id: string }) => {
+      const existingBookmark = await prisma.bookmark.findUnique({
+        where: {
+          id: args.id,
+        },
+      });
+
+      if (!existingBookmark) {
+        throw new Error("Bookmark not found");
+      }
+
+      await prisma.bookmark.delete({
+        where: {
+          id: args.id,
+        },
+      });
+
+      return true;
+    },
+
+    moveBookmark: async (
+      _parent: unknown,
+      args: {
+        id: string;
+        folderId: string;
       },
-      data: {
-        folderId: args.folderId,
-      },
-    });
+    ) => {
+      const bookmark = await prisma.bookmark.findUnique({
+        where: {
+          id: args.id,
+        },
+      });
+
+      if (!bookmark) {
+        throw new Error("Bookmark not found");
+      }
+
+      const folder = await prisma.folder.findUnique({
+        where: {
+          id: args.folderId,
+        },
+      });
+
+      if (!folder) {
+        throw new Error("Folder not found");
+      }
+
+      return prisma.bookmark.update({
+        where: {
+          id: args.id,
+        },
+        data: {
+          folderId: args.folderId,
+        },
+      });
+    },
   },
-},
 };
