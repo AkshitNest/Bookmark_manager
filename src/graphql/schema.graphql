@@ -8,7 +8,6 @@ type Folder {
 type Bookmark {
   id: ID!
   title: String!
-  search: String
   url: String!
   tags: [String!]!
   folderId: ID!

@@ -264,13 +264,11 @@ export const resolvers = {
         throw notFoundError("Bookmark not found");
       }
 
-      await prisma.bookmark.delete({
+      return prisma.bookmark.delete({
         where: {
           id: args.id,
         },
       });
-
-      return true;
     },
 
     moveBookmark: async (

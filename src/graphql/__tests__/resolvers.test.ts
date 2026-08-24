@@ -1,6 +1,8 @@
 import { GraphQLError } from "graphql";
 import { resolvers } from "../resolvers";
 import { describe, expect, test, mock } from "bun:test";
+
+
 describe("createFolder", () => {
   test("creates a folder successfully", async () => {
     const createdFolder = {
@@ -176,7 +178,7 @@ describe("deleteBookmark", () => {
       },
     );
 
-    expect(result).toBe(true);
+    expect(result).toEqual(existingBookmark);
     expect(prisma.prisma.bookmark.delete).toHaveBeenCalled();
 
     prisma.prisma.bookmark.findUnique = originalFindUnique;
