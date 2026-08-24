@@ -46,10 +46,10 @@ updateBookmark(
   tags: [String!]
 ): Bookmark!
 
-  deleteBookmark(id: ID!): Boolean!
+deleteBookmark(id: ID!): Bookmark!
 
-  moveBookmark(
-    id: ID!
-    folderId: ID!
-  ): Bookmark!
+moveBookmark(
+  id: ID!
+  folderId: ID!
+): Bookmark!
 }
